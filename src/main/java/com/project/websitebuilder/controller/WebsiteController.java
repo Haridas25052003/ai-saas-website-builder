@@ -28,7 +28,7 @@ public class WebsiteController {
     // @RequestBody tells Spring: read the JSON body and convert it into a GenerateRequest object
     // ResponseEntity lets us control the HTTP status code (200 OK, 400 Bad Request, etc.)
     @PostMapping("/generate")
-    public ResponseEntity<GenerateResponse> generateWebsite(@RequestBody GenerateRequest request) {
+    public ResponseEntity<GenerateResponse> generateWebsite(@RequestBody GenerateRequest request) throws Exception {
 
         // Basic validation — don't process empty prompts
         if (request.getPrompt() == null || request.getPrompt().trim().isEmpty()) {
