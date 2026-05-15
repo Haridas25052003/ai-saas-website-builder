@@ -2,44 +2,50 @@ package com.project.websitebuilder.controller;
 
 import com.project.websitebuilder.dto.GenerateRequest;
 import com.project.websitebuilder.dto.GenerateResponse;
+import com.project.websitebuilder.dto.ProjectSummaryDTO;
 import com.project.websitebuilder.service.WebsiteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-// @RestController = @Controller + @ResponseBody
-// Means: this class handles HTTP requests, and return values become JSON automatically
+import java.util.List;
+
 @RestController
-
-// All endpoints in this class start with /api
 @RequestMapping("/api")
-
-// Allows frontend (running on same or different origin) to call this API
-// Without this, browsers block the request with a CORS error
 @CrossOrigin(origins = "*")
 public class WebsiteController {
 
-    // Spring automatically injects our WebsiteService here
-    // We don't create it with 'new' — Spring manages it
     @Autowired
     private WebsiteService websiteService;
 
-    // This method handles: POST /api/generate
-    // @RequestBody tells Spring: read the JSON body and convert it into a GenerateRequest object
-    // ResponseEntity lets us control the HTTP status code (200 OK, 400 Bad Request, etc.)
+    // POST /api/generate — generate and save a new website
     @PostMapping("/generate")
-    public ResponseEntity<GenerateResponse> generateWebsite(@RequestBody GenerateRequest request) throws Exception {
-
-        // Basic validation — don't process empty prompts
+    public ResponseEntity<GenerateResponse> generateWebsite(@RequestBody GenerateRequest request) {
         if (request.getPrompt() == null || request.getPrompt().trim().isEmpty()) {
-            return ResponseEntity.badRequest().build(); // returns HTTP 400
+            return ResponseEntity.badRequest().build();
         }
+        try {
+            GenerateResponse response = websiteService.generateWebsite(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
-        // Delegate to the service layer — controller should never contain business logic
-        GenerateResponse response = websiteService.generateWebsite(request);
+    // GET /api/projects — return all projects (summary only, no code)
+    @GetMapping("/projects")
+    public ResponseEntity<List<ProjectSummaryDTO>> getHistory() {
+        return ResponseEntity.ok(websiteService.getHistory());
+    }
 
-        // Return the response with HTTP 200 OK
-        return ResponseEntity.ok(response);
+    // GET /api/projects/{id} — return full code for one project
+    @GetMapping("/projects/{id}")
+    public ResponseEntity<GenerateResponse> getProject(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(websiteService.getProjectById(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }
