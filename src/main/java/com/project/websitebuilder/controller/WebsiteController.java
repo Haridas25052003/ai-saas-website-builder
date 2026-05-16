@@ -8,11 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
+
 public class WebsiteController {
 
     @Autowired
@@ -46,6 +49,20 @@ public class WebsiteController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    // GET /api/providers/status
+    @GetMapping("/providers/status")
+    public ResponseEntity<?> getProviderStatus() {
+        Map<String, Object> status = new LinkedHashMap<>();
+        status.put("strategy", strategy);
+        status.put("providers", List.of(
+                Map.of("name", "OpenAI",   "configured", !openAiKey.isBlank()),
+                Map.of("name", "Groq",     "configured", !groqKey.isBlank()),
+                Map.of("name", "Gemini",   "configured", !geminiKey.isBlank()),
+                Map.of("name", "DeepSeek", "configured", !deepSeekKey.isBlank())
+        ));
+        return ResponseEntity.ok(status);
     }
 
 }

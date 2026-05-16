@@ -110,3 +110,81 @@ function hidePreview() {
     $('#previewSection').addClass('d-none');
     $('#previewFrame').removeClass('loaded');
 }
+
+// ── History ──────────────────────────────────────────────────────────────────
+
+// Load history when page opens
+$(document).ready(function () {
+    loadHistory();
+    $('#refreshHistoryBtn').on('click', loadHistory);
+});
+
+function loadHistory() {
+    $.ajax({
+        url: '/api/projects',
+        method: 'GET',
+        success: function (projects) {
+            renderHistory(projects);
+        },
+        error: function () {
+            $('#historyList').html(
+                '<p class="text-secondary">Could not load history.</p>'
+            );
+        }
+    });
+}
+
+function renderHistory(projects) {
+    const container = $('#historyList');
+    container.empty();
+
+    if (projects.length === 0) {
+        container.html('<p class="text-secondary">No projects yet. Generate your first website!</p>');
+        return;
+    }
+
+    projects.forEach(function (p) {
+        const date = new Date(p.createdAt).toLocaleString();
+        const badgeColor = p.status === 'SUCCESS' ? 'success' : 'danger';
+        const providerColor = {
+            'OpenAI': 'primary', 'Groq': 'warning',
+            'Gemini': 'info', 'DeepSeek': 'secondary'
+        }[p.providerUsed] || 'light';
+
+        const card = `
+            <div class="col-md-6 col-lg-4">
+                <div class="card bg-black border border-secondary rounded-3 p-3 h-100">
+                    <p class="text-white mb-2 small fw-bold" style="line-clamp:2; overflow:hidden;">
+                        ${escapeHtml(p.prompt)}
+                    </p>
+                    <div class="d-flex gap-2 flex-wrap mb-2">
+                        <span class="badge bg-${badgeColor}">${p.status}</span>
+                        <span class="badge bg-${providerColor} text-dark">${p.providerUsed}</span>
+                    </div>
+                    <p class="text-secondary" style="font-size:0.75rem;">${date}</p>
+                    ${p.status === 'SUCCESS' ?
+                        `<button class="btn btn-sm btn-outline-primary mt-auto load-project-btn"
+                            data-id="${p.id}">Load Preview</button>` : ''}
+                </div>
+            </div>`;
+        container.append(card);
+    });
+
+    // Load a past project into the preview iframe
+    $(document).on('click', '.load-project-btn', function () {
+        const id = $(this).data('id');
+        $.ajax({
+            url: '/api/projects/' + id,
+            method: 'GET',
+            success: function (response) {
+                renderPreview(response.html, response.css, response.js);
+                $('html, body').animate({ scrollTop: $('#previewSection').offset().top - 20 }, 600);
+            }
+        });
+    });
+}
+
+// Prevent XSS when rendering user prompt text in history cards
+function escapeHtml(text) {
+    return $('<div>').text(text).html();
+}
