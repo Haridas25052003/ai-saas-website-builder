@@ -5,6 +5,7 @@ import com.project.websitebuilder.dto.GenerateResponse;
 import com.project.websitebuilder.dto.ProjectSummaryDTO;
 import com.project.websitebuilder.service.WebsiteService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,10 +13,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+
+@Value("${ai.openai.api-key}") private String openAiKey;
+@Value("${ai.groq.api-key}")   private String groqKey;
+@Value("${ai.gemini.api-key}") private String geminiKey;
+@Value("${ai.deepseek.api-key}") private String deepSeekKey;
+@Value("${ai.strategy}")       private String strategy;
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
-
 public class WebsiteController {
 
     @Autowired
